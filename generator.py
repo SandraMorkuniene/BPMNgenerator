@@ -1,33 +1,14 @@
 import os
 import streamlit as st
-from openai import OpenAI
+import openai
 import json
 import requests
 import urllib.parse
 
 
-os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-client = OpenAI()
 
-st.write("✅ Client initialized successfully")
-
-# Test a simple GPT call
-if st.button("Test GPT"):
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": "Say hello"}],
-        temperature=0
-    )
-    st.write(response.choices[0].message.content)
-    
-
-#if "OPENAI_API_KEY" not in st.secrets:
-   # st.error("❌ OPENAI_API_KEY not found in Streamlit secrets!")
-#else:
-   # st.write("🔑 API key loaded:", "sk-..." + st.secrets["OPENAI_API_KEY"][-4:])
-# Load API key securely
-#client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.set_page_config(page_title="AI BPMN Swimlane Generator", page_icon="🛠", layout="wide")
 st.title(" AI BPMN Swimlane Generator")
@@ -56,7 +37,7 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
         {workflow_text}
         """
 
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2
@@ -132,6 +113,7 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
         file_name="workflow_bpmn_swimlanes.puml",
         mime="text/plain"
     )
+
 
 
 
