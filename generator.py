@@ -5,6 +5,10 @@ import json
 import requests
 import urllib.parse
 
+if "OPENAI_API_KEY" not in st.secrets:
+    st.error("❌ OPENAI_API_KEY not found in Streamlit secrets!")
+else:
+    st.write("🔑 API key loaded:", "sk-..." + st.secrets["OPENAI_API_KEY"][-4:])
 # Load API key securely
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
@@ -111,6 +115,7 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
         file_name="workflow_bpmn_swimlanes.puml",
         mime="text/plain"
     )
+
 
 
 
