@@ -8,11 +8,11 @@ import urllib.parse
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 st.set_page_config(page_title="AI BPMN Swimlane Generator", page_icon="🛠", layout="wide")
-st.title("🛠 AI BPMN Swimlane Generator")
+st.title(" AI BPMN Swimlane Generator")
 st.write("Paste workflow text, and AI will generate a BPMN diagram with swimlanes using PlantUML.")
 
 # Input workflow text
-workflow_text = st.text_area("✏️ Enter Workflow Description", height=200,
+workflow_text = st.text_area(" Enter Workflow Description", height=200,
                              placeholder="E.g., Customer places an order, System validates payment, Warehouse ships order...")
 
 if st.button("Generate BPMN Diagram") and workflow_text.strip():
@@ -110,19 +110,3 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
         file_name="workflow_bpmn_swimlanes.puml",
         mime="text/plain"
     )
-🔄 Example Input → Swimlane Output
-Input Text
-“Customer places an order. System validates payment. Warehouse ships order. System closes transaction.”
-
-JSON
-json
-Copy code
-{
-  "actors": ["Customer", "System", "Warehouse"],
-  "steps": [
-    {"actor": "Customer", "action": "Order placed", "type": "start"},
-    {"actor": "System", "action": "Validate payment", "type": "task"},
-    {"actor": "Warehouse", "action": "Ship order", "type": "task"},
-    {"actor": "System", "action": "Transaction closed", "type": "end"}
-  ]
-}
