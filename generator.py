@@ -6,8 +6,7 @@ import requests
 import urllib.parse
 
 # Load API key securely
-os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-client = OpenAI() 
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.set_page_config(page_title="AI BPMN Swimlane Generator", page_icon="🛠", layout="wide")
 st.title(" AI BPMN Swimlane Generator")
@@ -112,6 +111,7 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
         file_name="workflow_bpmn_swimlanes.puml",
         mime="text/plain"
     )
+
 
 
 
