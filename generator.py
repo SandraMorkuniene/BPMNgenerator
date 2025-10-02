@@ -57,9 +57,9 @@ def json_to_plantuml(data):
                 node_id = f"{actor}_{i}".replace(" ", "_")
 
                 if step_type == "start":
-                    plantuml_lines.append(f"    start {node_id} : {action}")
+                    plantuml_lines.append(f"    start {node_id} ")
                 elif step_type == "end":
-                    plantuml_lines.append(f"    end {node_id} : {action}")
+                    plantuml_lines.append(f"    end {node_id} ")
                 elif step_type == "gateway":
                     plantuml_lines.append(f"    gateway {node_id} : {action}")
                 else:
@@ -134,6 +134,7 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
         file_name="workflow_bpmn_swimlanes.puml",
         mime="text/plain"
     )
+
 
 
 
