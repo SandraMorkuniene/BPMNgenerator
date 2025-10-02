@@ -18,6 +18,62 @@ st.write("Paste workflow text, and AI will generate a BPMN diagram using PlantUM
 workflow_text = st.text_area(" Enter Workflow Description", height=200,
                              placeholder="E.g., Customer places an order, System validates payment, Warehouse ships order...")
 
+# --- PlantUML Encoding Helpers ---
+def plantuml_encode(text: str) -> str:
+    """Compress + encode PlantUML for server rendering"""
+    zlibbed_str = zlib.compress(text.encode("utf-8"))[2:-4]
+    encoded = base64.b64encode(zlibbed_str).decode("utf-8")
+    trans = str.maketrans(
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
+    )
+    return encoded.translate(trans)
+
+def render_plantuml(uml_code: str) -> str:
+    encoded = plantuml_encode(uml_code)
+    return f"http://www.plantuml.com/plantuml/svg/{encoded}"
+
+# --- JSON → PlantUML ---
+def json_to_plantuml(data):
+    actors = data.get("actors", [])
+    steps = data.get("steps", [])
+
+    # Ensure actors include all step actors
+    for s in steps:
+        if s["actor"] not in actors:
+            actors.append(s["actor"])
+
+    plantuml_lines = ["@startuml", "!include <bpmn>", ""]
+
+    plantuml_lines.append("pool Process {")
+    for actor in actors:
+        plantuml_lines.append(f"  lane {actor} {{")
+        for i, step in enumerate(steps):
+            if step["actor"] == actor:
+                step_type = step.get("type", "task").lower()
+                action = step.get("action", "")
+                node_id = f"{actor}_{i}".replace(" ", "_")
+
+                if step_type == "start":
+                    plantuml_lines.append(f"    start event {node_id} : {action}")
+                elif step_type == "end":
+                    plantuml_lines.append(f"    end event {node_id} : {action}")
+                elif step_type == "gateway":
+                    plantuml_lines.append(f"    gateway {node_id} : {action}")
+                else:
+                    plantuml_lines.append(f"    task {node_id} : {action}")
+        plantuml_lines.append("  }")
+    plantuml_lines.append("}")
+
+    # Sequential flow
+    ids = [f"{s['actor']}_{i}".replace(" ", "_") for i, s in enumerate(steps)]
+    for a, b in zip(ids, ids[1:]):
+        plantuml_lines.append(f"{a} --> {b}")
+
+    plantuml_lines.append("@enduml")
+    return "\n".join(plantuml_lines)
+
+# --- Main ---
 if st.button("Generate BPMN Diagram") and workflow_text.strip():
     with st.spinner("Parsing workflow into structured JSON..."):
         prompt = f"""
@@ -42,7 +98,7 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2
         )
-        json_text = response.choices[0].message.content.strip()
+        json_text = response.choices[0].message["content"].strip()
 
         try:
             workflow_data = json.loads(json_text)
@@ -54,54 +110,13 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
     st.subheader("✅ Extracted Workflow JSON")
     st.json(workflow_data)
 
-    # --- JSON → PlantUML BPMN with Swimlanes ---
-    def json_to_plantuml(data):
-        actors = data.get("actors", [])
-        steps = data.get("steps", [])
-
-        plantuml_lines = ["@startuml", "!include <bpmn>", ""]
-
-        # Create one pool with lanes for each actor
-        plantuml_lines.append("pool Process {")
-        for actor in actors:
-            plantuml_lines.append(f"  lane {actor} {{")
-            # Add steps belonging to this actor
-            for i, step in enumerate(steps):
-                if step["actor"] == actor:
-                    step_type = step.get("type", "task").lower()
-                    action = step.get("action", "")
-                    node_id = f"{actor}_{i}"
-
-                    if step_type == "start":
-                        plantuml_lines.append(f"    start event {node_id} : {action}")
-                    elif step_type == "end":
-                        plantuml_lines.append(f"    end event {node_id} : {action}")
-                    elif step_type == "gateway":
-                        plantuml_lines.append(f"    gateway {node_id} : {action}")
-                    else:
-                        plantuml_lines.append(f"    task {node_id} : {action}")
-            plantuml_lines.append("  }")
-        plantuml_lines.append("}")
-
-        # Add simple sequential flow (linear for now)
-        ids = [f"{s['actor']}_{i}" for i, s in enumerate(steps)]
-        for a, b in zip(ids, ids[1:]):
-            plantuml_lines.append(f"{a} --> {b}")
-
-        plantuml_lines.append("@enduml")
-        return "\n".join(plantuml_lines)
-
+    # Convert JSON → PlantUML
     plantuml_code = json_to_plantuml(workflow_data)
 
     st.subheader("📄 Generated PlantUML Code")
     st.code(plantuml_code, language="plantuml")
 
-    # --- Render Diagram via PlantUML server ---
-    def render_plantuml(uml_code: str):
-        encoded = urllib.parse.quote(uml_code)
-        server_url = f"http://www.plantuml.com/plantuml/svg/{encoded}"
-        return server_url
-
+    # Render diagram
     image_url = render_plantuml(plantuml_code)
 
     st.subheader("📊 BPMN Swimlane Diagram")
@@ -113,10 +128,3 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
         file_name="workflow_bpmn_swimlanes.puml",
         mime="text/plain"
     )
-
-
-
-
-
-
-
