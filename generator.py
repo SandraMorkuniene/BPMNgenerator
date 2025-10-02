@@ -4,6 +4,8 @@ import openai
 import json
 import requests
 import urllib.parse
+import zlib
+import base64
 
 
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -132,4 +134,5 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
         file_name="workflow_bpmn_swimlanes.puml",
         mime="text/plain"
     )
+
 
