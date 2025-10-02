@@ -99,6 +99,10 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
             temperature=0.2
         )
         json_text = response.choices[0].message["content"].strip()
+        if json_text.startswith("```"):
+            json_text = json_text.strip("`")   # remove backticks
+            if json_text.lower().startswith("json"):
+                json_text = json_text[4:].strip()
 
         try:
             workflow_data = json.loads(json_text)
@@ -128,3 +132,4 @@ if st.button("Generate BPMN Diagram") and workflow_text.strip():
         file_name="workflow_bpmn_swimlanes.puml",
         mime="text/plain"
     )
+
